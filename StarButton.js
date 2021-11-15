@@ -1,190 +1,174 @@
 // React and react native imports
 import React, { Component } from 'react';
-import { View, ViewPropTypes, StyleSheet } from 'react-native';
+import { Image, StyleSheet, ViewPropTypes } from 'react-native';
 import PropTypes from 'prop-types';
-import { View as AnimatableView } from 'react-native-animatable';
+import { createIconSetFromIcoMoon } from 'react-native-vector-icons';
 
-// Local file imports
-import StarButton from './StarButton';
+// Third party imports
+import Button from 'react-native-button';
+import EntypoIcons from 'react-native-vector-icons/Entypo';
+import EvilIconsIcons from 'react-native-vector-icons/EvilIcons';
+import FeatherIcons from 'react-native-vector-icons/Feather';
+import FontAwesomeIcons from 'react-native-vector-icons/FontAwesome';
+import FoundationIcons from 'react-native-vector-icons/Foundation';
+import IoniconsIcons from 'react-native-vector-icons/Ionicons';
+import MaterialIconsIcons from 'react-native-vector-icons/MaterialIcons';
+import MaterialCommunityIconsIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import OcticonsIcons from 'react-native-vector-icons/Octicons';
+import ZocialIcons from 'react-native-vector-icons/Zocial';
+import SimpleLineIconsIcons from 'react-native-vector-icons/SimpleLineIcons';
+import { Icon } from 'react-native-elements';
 
-const ANIMATION_TYPES = [
-  'bounce',
-  'flash',
-  'jello',
-  'pulse',
-  'rotate',
-  'rubberBand',
-  'shake',
-  'swing',
-  'tada',
-  'wobble',
-];
+const iconSets = {
+  Entypo: EntypoIcons,
+  EvilIcons: EvilIconsIcons,
+  Feather: FeatherIcons,
+  FontAwesome: FontAwesomeIcons,
+  Foundation: FoundationIcons,
+  Ionicons: IoniconsIcons,
+  MaterialIcons: MaterialIconsIcons,
+  MaterialCommunityIcons: MaterialCommunityIconsIcons,
+  Octicons: OcticonsIcons,
+  Zocial: ZocialIcons,
+  SimpleLineIcons: SimpleLineIconsIcons,
+};
 
 const propTypes = {
-  activeOpacity: PropTypes.number,
-  animation: PropTypes.oneOf(ANIMATION_TYPES),
   buttonStyle: ViewPropTypes.style,
-  containerStyle: ViewPropTypes.style,
-  disabled: PropTypes.bool,
-  emptyStar: PropTypes.oneOfType([
+  disabled: PropTypes.bool.isRequired,
+  halfStarEnabled: PropTypes.bool.isRequired,
+  icoMoonJson: PropTypes.string,
+  iconSet: PropTypes.string.isRequired,
+  rating: PropTypes.number.isRequired,
+  reversed: PropTypes.bool.isRequired,
+  starColor: PropTypes.string.isRequired,
+  starIconName: PropTypes.oneOfType([
     PropTypes.string,
     PropTypes.object,
     PropTypes.number,
-  ]),
-  emptyStarColor: PropTypes.string,
-  fullStar: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.object,
-    PropTypes.number,
-  ]),
-  fullStarColor: PropTypes.string,
-  halfStar: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.object,
-    PropTypes.number,
-  ]),
-  halfStarColor: PropTypes.string,
-  halfStarEnabled: PropTypes.bool,
-  // eslint-disable-next-line react/forbid-prop-types
-  icoMoonJson: PropTypes.object,
-  iconSet: PropTypes.string,
-  maxStars: PropTypes.number,
-  rating: PropTypes.number,
-  reversed: PropTypes.bool,
-  starSize: PropTypes.number,
+  ]).isRequired,
+  starSize: PropTypes.number.isRequired,
+  activeOpacity: PropTypes.number.isRequired,
   starStyle: ViewPropTypes.style,
-  selectedStar: PropTypes.func,
+  onStarButtonPress: PropTypes.func.isRequired,
 };
 
 const defaultProps = {
-  activeOpacity: 0.2,
-  animation: undefined,
   buttonStyle: {},
-  containerStyle: {},
-  disabled: false,
-  emptyStar: 'star-o',
-  emptyStarColor: 'gray',
-  fullStar: 'star',
-  fullStarColor: 'black',
-  halfStar: 'star-half-o',
-  halfStarColor: undefined,
-  halfStarEnabled: false,
   icoMoonJson: undefined,
-  iconSet: 'FontAwesome',
-  maxStars: 5,
-  rating: 0,
-  reversed: false,
-  starSize: 40,
   starStyle: {},
-  selectedStar: () => {},
 };
 
-class StarRating extends Component {
+class StarButton extends Component {
   constructor(props) {
     super(props);
 
-    this.starRef = [];
-    this.onStarButtonPress = this.onStarButtonPress.bind(this);
+    this.onButtonPress = this.onButtonPress.bind(this);
   }
 
-  onStarButtonPress(rating) {
-    const { selectedStar } = this.props;
+  onButtonPress(event) {
+    const {
+      halfStarEnabled,
+      starSize,
+      rating,
+      onStarButtonPress,
+    } = this.props;
 
-    selectedStar(rating);
+    let addition = 0;
+
+    if (halfStarEnabled) {
+      const isHalfSelected = event.nativeEvent.locationX < starSize / 2;
+      addition = isHalfSelected ? -0.5 : 0;
+    }
+
+    onStarButtonPress(rating + addition);
+  }
+
+  iconSetFromProps() {
+    const {
+      icoMoonJson,
+      iconSet,
+    } = this.props;
+    if (icoMoonJson) {
+      return createIconSetFromIcoMoon(icoMoonJson);
+    }
+
+    return iconSets[iconSet];
+  }
+
+  renderIcon() {
+    const {
+      reversed,
+      starColor,
+      starIconName,
+      starSize,
+      starStyle,
+    } = this.props;
+
+    // const Icon = this.iconSetFromProps();
+    let iconElement;
+
+    const newStarStyle = {
+      transform: [{
+        scaleX: reversed ? -1 : 1,
+      }],
+      ...StyleSheet.flatten(starStyle),
+    };
+
+    if (typeof starIconName === 'string') {
+      iconElement = (
+        <Icon
+          name={starIconName}
+          size={starSize}
+          color={starColor}
+          style={newStarStyle}
+          type={'ionicon'}
+        />
+      );
+    } else {
+      const imageStyle = {
+        width: starSize,
+        height: starSize,
+        resizeMode: 'contain',
+      };
+
+      const iconStyles = [
+        imageStyle,
+        newStarStyle,
+      ];
+
+      iconElement = (
+        <Image
+          source={starIconName}
+          style={iconStyles}
+        />
+      );
+    }
+
+    return iconElement;
   }
 
   render() {
     const {
       activeOpacity,
-      animation,
       buttonStyle,
-      containerStyle,
       disabled,
-      emptyStar,
-      emptyStarColor,
-      fullStar,
-      fullStarColor,
-      halfStar,
-      halfStarColor,
-      halfStarEnabled,
-      icoMoonJson,
-      iconSet,
-      maxStars,
-      rating,
-      reversed,
-      starSize,
-      starStyle,
     } = this.props;
 
-    const newContainerStyle = {
-      flexDirection: reversed ? 'row-reverse' : 'row',
-      justifyContent: 'space-between',
-      ...StyleSheet.flatten(containerStyle),
-    };
-
-    // Round rating down to nearest .5 star
-    let starsLeft = Math.round(rating * 2) / 2;
-    const starButtons = [];
-
-    for (let i = 0; i < maxStars; i++) {
-      let starIconName = emptyStar;
-      let finalStarColor = emptyStarColor;
-
-      if (starsLeft >= 1) {
-        starIconName = fullStar;
-        finalStarColor = fullStarColor;
-      } else if (starsLeft === 0.5) {
-        starIconName = halfStar;
-        if (halfStarColor) {
-          finalStarColor = halfStarColor;
-        } else {
-          finalStarColor = fullStarColor;
-        }
-      }
-
-      const starButtonElement = (
-        <AnimatableView
-          key={i}
-          ref={(node) => { this.starRef.push(node); }}
-        >
-          <StarButton
-            activeOpacity={activeOpacity}
-            buttonStyle={buttonStyle}
-            disabled={disabled}
-            halfStarEnabled={halfStarEnabled}
-            icoMoonJson={icoMoonJson}
-            iconSet={iconSet}
-            onStarButtonPress={(event) => {
-              if (animation && ANIMATION_TYPES.includes(animation)) {
-                for (let s = 0; s <= i; s++) {
-                  this.starRef[s][animation](1000 + (s * 200));
-                }
-              }
-              this.onStarButtonPress(event);
-            }}
-            rating={i + 1}
-            reversed={reversed}
-            starColor={finalStarColor}
-            starIconName={starIconName}
-            starSize={starSize}
-            starStyle={starStyle}
-          />
-        </AnimatableView>
-      );
-
-      starButtons.push(starButtonElement);
-      starsLeft -= 1;
-    }
-
     return (
-      <View style={newContainerStyle} pointerEvents={disabled ? 'none' : 'auto'}>
-        {starButtons}
-      </View>
+      <Button
+        activeOpacity={activeOpacity}
+        disabled={disabled}
+        containerStyle={buttonStyle}
+        onPress={this.onButtonPress}
+      >
+        {this.renderIcon()}
+      </Button>
     );
   }
 }
 
-StarRating.propTypes = propTypes;
-StarRating.defaultProps = defaultProps;
+StarButton.propTypes = propTypes;
+StarButton.defaultProps = defaultProps;
 
-export default StarRating;
+export default StarButton;
